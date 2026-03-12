@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 // src/components/TesoreraDashboard.tsx
 
 import { useState, useMemo, useTransition, useCallback } from 'react'
@@ -19,11 +19,11 @@ import type {
   AppUserWithStudents, QuotaType,
 } from '@/lib/supabase/types'
 
-// â”€â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── HELPERS ──────────────────────────────────────────────────
 const clp   = (n: number) => `$${Math.round(n).toLocaleString('es-CL')}`
 const dateF = (s?: string | null) => s
   ? new Date(s + 'T00:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })
-  : 'â€”'
+  : '—'
 const nowDate = () => new Date().toISOString().split('T')[0]
 
 const quotaParticipants = (q: Quota, students: Student[]) =>
@@ -32,7 +32,7 @@ const quotaParticipants = (q: Quota, students: Student[]) =>
 const isParticipant = (q: Quota, sid: string, students: Student[]) =>
   quotaParticipants(q, students).includes(sid)
 
-// â”€â”€â”€ TIPOS PROPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TIPOS PROPS ──────────────────────────────────────────────
 interface Props {
   user:               AppUser
   initialStudents:    Student[]
@@ -42,7 +42,7 @@ interface Props {
   initialApoderados:  AppUserWithStudents[]
 }
 
-// â”€â”€â”€ PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PDF ──────────────────────────────────────────────────────
 function generatePDF(
   students: Student[], quotas: Quota[],
   payments: Payment[], expenses: Expense[]
@@ -64,9 +64,9 @@ function generatePDF(
   const rows = students.map(s => {
     const cells = quotas.map(q => {
       const applies = isParticipant(q, s.id, students)
-      if (!applies) return `<td style="text-align:center;color:#aaa;font-size:11px;">â€”</td>`
+      if (!applies) return `<td style="text-align:center;color:#aaa;font-size:11px;">—</td>`
       const paid = hasPaid(s.id, q.id)
-      return `<td style="text-align:center;"><span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:${paid ? '#d1fae5' : '#fee2e2'};color:${paid ? '#065f46' : '#991b1b'};">${paid ? 'âœ“ Pagado' : 'Pendiente'}</span></td>`
+      return `<td style="text-align:center;"><span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:${paid ? '#d1fae5' : '#fee2e2'};color:${paid ? '#065f46' : '#991b1b'};">${paid ? '✓ Pagado' : 'Pendiente'}</span></td>`
     }).join('')
     const myTotal = payments.filter(p => p.student_id === s.id)
       .reduce((sum, p) => { const q = quotas.find(q => q.id === p.quota_id); return sum + (q?.amount ?? 0) }, 0)
@@ -97,7 +97,7 @@ function generatePDF(
     </tr>`).join('')
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Informe TesorerÃ­a</title>
+<title>Informe Tesorería</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=Instrument+Sans:wght@400;600;700&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -120,7 +120,7 @@ function generatePDF(
   .footer{margin-top:36px;border-top:1px solid #e8e7f0;padding-top:12px;font-size:10px;color:#aaa;display:flex;justify-content:space-between;}
   @media print{body{padding:20px 28px;}}
 </style></head><body>
-  <h1>TesorerÃ­a Curso</h1>
+  <h1>Tesorería Curso</h1>
   <div class="meta">Generado el ${today}</div>
   <div class="kpis">
     <div class="kpi ki"><label>Saldo disponible</label><span>${clp(balance)}</span></div>
@@ -132,13 +132,13 @@ function generatePDF(
   <p style="font-size:11px;color:#888;margin-top:5px;margin-bottom:24px;">Avance: <strong style="color:#0d0d12">${globalPct}%</strong></p>
   <h2>Estado de pagos por alumno</h2>
   <table><thead><tr><th style="min-width:140px;">Alumno</th>${qHeaders}<th style="text-align:center;">Total pagado</th></tr></thead><tbody>${rows}</tbody></table>
-  <h2>ProyecciÃ³n por cuota</h2>
+  <h2>Proyección por cuota</h2>
   <table><thead><tr><th>Cuota</th><th style="text-align:center;">Participantes</th><th style="text-align:right;">Esperado</th><th style="text-align:right;">Recaudado</th><th style="text-align:right;">Por cobrar</th><th style="text-align:center;">Avance</th></tr></thead><tbody>${projRows}</tbody></table>
   <h2>Gastos registrados</h2>
-  <table><thead><tr><th>DescripciÃ³n</th><th>CategorÃ­a</th><th style="text-align:right;">Monto</th><th>Fecha</th></tr></thead>
+  <table><thead><tr><th>Descripción</th><th>Categoría</th><th style="text-align:right;">Monto</th><th>Fecha</th></tr></thead>
   <tbody>${expRows}</tbody>
   <tfoot><tr><td colspan="2" style="font-weight:700;padding:10px;">Total gastado</td><td style="text-align:right;font-weight:700;color:#dc2626;padding:10px;">-${clp(totalExpense)}</td><td></td></tr></tfoot></table>
-  <div class="footer"><span>TesorerÃ­a Curso</span><span>${today}</span></div>
+  <div class="footer"><span>Tesorería Curso</span><span>${today}</span></div>
 </body></html>`
 
   const win = window.open('', '_blank')!
@@ -147,14 +147,14 @@ function generatePDF(
   win.onload = () => win.print()
 }
 
-// â”€â”€â”€ MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── MODAL ────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="overlay">
       <div className="modal">
         <div className="modal-header">
           <div className="modal-title">{title}</div>
-          <button className="modal-close" onClick={onClose}>âœ•</button>
+          <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         {children}
       </div>
@@ -162,7 +162,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   )
 }
 
-// â”€â”€â”€ STUDENT PICKER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STUDENT PICKER ───────────────────────────────────────────
 function StudentPicker({ students, selected, onChange }: { students: Student[]; selected: string[]; onChange: (v: string[]) => void }) {
   const toggle = (id: string) =>
     onChange(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id])
@@ -184,9 +184,9 @@ function StudentPicker({ students, selected, onChange }: { students: Student[]; 
   )
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 export function TesoreraDashboard({
   user,
   initialStudents, initialQuotas, initialPayments,
@@ -209,7 +209,7 @@ export function TesoreraDashboard({
   }
   const closeModal = () => { setModal(null); setErr('') }
 
-  // â”€â”€ CÃ¡lculos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cálculos ───────────────────────────────────────────────
   const totalIncome  = useMemo(() => payments.reduce((s, p) => { const q = quotas.find(q => q.id === p.quota_id); return s + (q?.amount ?? 0) }, 0), [payments, quotas])
   const totalExpense = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses])
   const balance      = totalIncome - totalExpense
@@ -228,7 +228,7 @@ export function TesoreraDashboard({
   const hasPaid = useCallback((sid: string, qid: string) =>
     payments.some(p => p.student_id === sid && p.quota_id === qid), [payments])
 
-  // â”€â”€ Acciones â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Acciones ───────────────────────────────────────────────
   const run = (fn: () => Promise<any>, onOk: () => void) => {
     startTransition(async () => {
       const res = await fn()
@@ -310,7 +310,7 @@ export function TesoreraDashboard({
     run(() => resetApoderadoPasswordAction(id), () => setApoderados(ap => ap.map(a => a.id === id ? { ...a, must_change_password: true } : a)))
   }
 
-  // â”€â”€ Cuota en modal pago â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cuota en modal pago ────────────────────────────────────
   const quotaForPago    = form.quota_id ? quotas.find(q => q.id === form.quota_id) : null
   const eligibleForPago = quotaForPago ? quotaParticipants(quotaForPago, students) : students.map(s => s.id)
 
@@ -319,7 +319,7 @@ export function TesoreraDashboard({
     { id: 'cuotas',     label: 'Cuotas' },
     { id: 'pagos',      label: 'Pagos' },
     { id: 'gastos',     label: 'Gastos' },
-    { id: 'proyeccion', label: 'ProyecciÃ³n' },
+    { id: 'proyeccion', label: 'Proyección' },
     { id: 'alumnos',    label: 'Alumnos' },
     { id: 'apoderados', label: 'Apoderados' },
   ]
@@ -329,8 +329,8 @@ export function TesoreraDashboard({
       {/* TOPBAR */}
       <div className="topbar no-print">
         <div>
-          <div className="topbar-title">ðŸ¦ TesorerÃ­a <span>Curso</span></div>
-          <div className="topbar-sub">Vista Tesorera Â· {user.display_name}</div>
+          <div className="topbar-title">🏦 Tesorería <span>Curso</span></div>
+          <div className="topbar-sub">Vista Tesorera · {user.display_name}</div>
         </div>
         <nav className="topbar-nav">
           {TABS.map(t => (
@@ -340,14 +340,14 @@ export function TesoreraDashboard({
           ))}
         </nav>
         <div className="topbar-right">
-          <button className="btn btn-green btn-sm" onClick={() => generatePDF(students, quotas, payments, expenses)}>ðŸ“„ PDF</button>
+          <button className="btn btn-green btn-sm" onClick={() => generatePDF(students, quotas, payments, expenses)}>📄 PDF</button>
           <button className="btn btn-ghost btn-sm" onClick={() => startTransition(() => logoutAction())}>Salir</button>
         </div>
       </div>
 
       <div className="content">
 
-        {/* â•â• RESUMEN â•â• */}
+        {/* ══ RESUMEN ══ */}
         {tab === 'resumen' && (
           <>
             <div className="card-grid card-grid-3 mb-4">
@@ -365,7 +365,7 @@ export function TesoreraDashboard({
             </div>
             <div className="card-grid card-grid-2 mb-4">
               <div className="card">
-                <div className="card-title">Ãšltimos pagos</div>
+                <div className="card-title">Últimos pagos</div>
                 <table className="tbl">
                   <thead><tr><th>Alumno</th><th>Cuota</th><th>Fecha</th></tr></thead>
                   <tbody>
@@ -384,9 +384,9 @@ export function TesoreraDashboard({
                 </table>
               </div>
               <div className="card">
-                <div className="card-title">Ãšltimos gastos</div>
+                <div className="card-title">Últimos gastos</div>
                 <table className="tbl">
-                  <thead><tr><th>DescripciÃ³n</th><th>Monto</th><th>Fecha</th></tr></thead>
+                  <thead><tr><th>Descripción</th><th>Monto</th><th>Fecha</th></tr></thead>
                   <tbody>
                     {[...expenses].reverse().slice(0, 6).map(e => (
                       <tr key={e.id}>
@@ -401,7 +401,7 @@ export function TesoreraDashboard({
             </div>
             <div className="card">
               <div className="row mb-4">
-                <div className="card-title" style={{ marginBottom: 0 }}>RecaudaciÃ³n global</div>
+                <div className="card-title" style={{ marginBottom: 0 }}>Recaudación global</div>
                 <span className="fw-700 fs-13 c-indigo">{globalPct}% del esperado</span>
               </div>
               <div className="progress-bar">
@@ -415,7 +415,7 @@ export function TesoreraDashboard({
           </>
         )}
 
-        {/* â•â• CUOTAS â•â• */}
+        {/* ══ CUOTAS ══ */}
         {tab === 'cuotas' && (
           <div className="card">
             <div className="row mb-4">
@@ -437,7 +437,7 @@ export function TesoreraDashboard({
                       <td><span className="badge badge-gray">{q.participant_ids === null ? `Todo el curso (${students.length})` : `${parts.length} de ${students.length}`}</span></td>
                       <td className="fs-12 c-muted">{dateF(q.due_date)}</td>
                       <td className="fw-700 c-green">{clp(paidCount * q.amount)}</td>
-                      <td><span className={`badge ${pending > 0 ? 'badge-amber' : 'badge-green'}`}>{pending > 0 ? `${pending} pendiente${pending > 1 ? 's' : ''}` : 'âœ“ Completo'}</span></td>
+                      <td><span className={`badge ${pending > 0 ? 'badge-amber' : 'badge-green'}`}>{pending > 0 ? `${pending} pendiente${pending > 1 ? 's' : ''}` : '✓ Completo'}</span></td>
                       <td><button className="btn-red-sm" onClick={() => handleDeleteQuota(q.id)}>Eliminar</button></td>
                     </tr>
                   )
@@ -447,7 +447,7 @@ export function TesoreraDashboard({
           </div>
         )}
 
-        {/* â•â• PAGOS â•â• */}
+        {/* ══ PAGOS ══ */}
         {tab === 'pagos' && (
           <div className="card">
             <div className="row mb-4">
@@ -486,7 +486,7 @@ export function TesoreraDashboard({
                               {!belongs
                                 ? <span className="badge badge-gray">No aplica</span>
                                 : paid
-                                  ? <button className="badge badge-green" style={{ cursor: 'pointer', border: 'none' }} title={`Pagado ${dateF(pay?.paid_at)}`} onClick={() => pay && handleDeletePago(pay.id)}>âœ“ Pagado</button>
+                                  ? <button className="badge badge-green" style={{ cursor: 'pointer', border: 'none' }} title={`Pagado ${dateF(pay?.paid_at)}`} onClick={() => pay && handleDeletePago(pay.id)}>✓ Pagado</button>
                                   : <span className="badge badge-red">Pendiente</span>
                               }
                             </td>
@@ -499,21 +499,21 @@ export function TesoreraDashboard({
                 </tbody>
               </table>
             </div>
-            <p style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10 }}>ðŸ’¡ Haz clic en "âœ“ Pagado" para anular un pago.</p>
+            <p style={{ fontSize: 10, color: 'var(--muted)', marginTop: 10 }}>💡 Haz clic en "✓ Pagado" para anular un pago.</p>
           </div>
         )}
 
-        {/* â•â• GASTOS â•â• */}
+        {/* ══ GASTOS ══ */}
         {tab === 'gastos' && (
           <div className="card">
             <div className="row mb-4">
               <div className="card-title" style={{ marginBottom: 0 }}>Gastos registrados</div>
               <button className="btn btn-danger" onClick={() => openModal('gasto')}>+ Registrar gasto</button>
             </div>
-            {balance < 0 && <div className="alert alert-red">âš ï¸ Saldo negativo: los gastos superan lo recaudado en {clp(Math.abs(balance))}.</div>}
-            {balance >= 0 && balance < totalExpense * 0.2 && totalExpense > 0 && <div className="alert alert-amber">âš ï¸ Saldo bajo: quedan {clp(balance)} disponibles.</div>}
+            {balance < 0 && <div className="alert alert-red">⚠️ Saldo negativo: los gastos superan lo recaudado en {clp(Math.abs(balance))}.</div>}
+            {balance >= 0 && balance < totalExpense * 0.2 && totalExpense > 0 && <div className="alert alert-amber">⚠️ Saldo bajo: quedan {clp(balance)} disponibles.</div>}
             <table className="tbl">
-              <thead><tr><th>DescripciÃ³n</th><th>CategorÃ­a</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
+              <thead><tr><th>Descripción</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
               <tbody>
                 {[...expenses].reverse().map(e => (
                   <tr key={e.id}>
@@ -533,11 +533,11 @@ export function TesoreraDashboard({
           </div>
         )}
 
-        {/* â•â• PROYECCIÃ“N â•â• */}
+        {/* ══ PROYECCIÓN ══ */}
         {tab === 'proyeccion' && (
           <>
             <div className="card-grid card-grid-3 mb-4">
-              <div className="kpi kpi-indigo"><div className="kpi-label">RecaudaciÃ³n esperada</div><div className="kpi-value">{clp(totalExpected)}</div><div className="kpi-sub">SegÃºn participantes</div></div>
+              <div className="kpi kpi-indigo"><div className="kpi-label">Recaudación esperada</div><div className="kpi-value">{clp(totalExpected)}</div><div className="kpi-sub">Según participantes</div></div>
               <div className="kpi kpi-green"><div className="kpi-label">Recaudado hasta hoy</div><div className="kpi-value">{clp(totalIncome)}</div><div className="kpi-sub">{globalPct}% del esperado</div></div>
               <div className="kpi kpi-amber"><div className="kpi-label">Falta por recaudar</div><div className="kpi-value">{clp(totalExpected - totalIncome)}</div><div className="kpi-sub">{100 - globalPct}% pendiente</div></div>
             </div>
@@ -555,7 +555,7 @@ export function TesoreraDashboard({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                       <span className="fw-700 fs-13">{p.name}</span>
                       <span className={`badge ${p.type === 'mensual' ? 'badge-indigo' : 'badge-blue'}`}>{p.type === 'mensual' ? 'Mensual' : 'Especial'}</span>
-                      <span className="badge badge-gray">ðŸ‘¥ {p.participant_ids === null ? 'Todo el curso' : `${p.parts.length} de ${students.length}`}</span>
+                      <span className="badge badge-gray">👥 {p.participant_ids === null ? 'Todo el curso' : `${p.parts.length} de ${students.length}`}</span>
                     </div>
                     <span className="fw-700 fs-13 c-indigo">{p.pct}%</span>
                   </div>
@@ -563,7 +563,7 @@ export function TesoreraDashboard({
                     <div className="progress-fill" style={{ width: `${p.pct}%`, background: p.pct === 100 ? 'var(--green)' : p.pct >= 60 ? 'var(--indigo)' : 'var(--amber)' }} />
                   </div>
                   <div className="row mt-3" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                    <span>Esperado: {clp(p.expected)} Â· Recaudado: <strong style={{ color: 'var(--green)' }}>{clp(p.paid)}</strong></span>
+                    <span>Esperado: {clp(p.expected)} · Recaudado: <strong style={{ color: 'var(--green)' }}>{clp(p.paid)}</strong></span>
                     <span style={{ color: 'var(--red)' }}>Falta: <strong>{clp(p.missing)}</strong></span>
                   </div>
                 </div>
@@ -571,7 +571,7 @@ export function TesoreraDashboard({
               <div className="divider" />
               <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
                 {[
-                  { label: 'RecaudaciÃ³n esperada', val: clp(totalExpected), color: 'var(--ink)' },
+                  { label: 'Recaudación esperada', val: clp(totalExpected), color: 'var(--ink)' },
                   { label: 'Ya recaudado', val: clp(totalIncome), color: 'var(--green)' },
                   { label: 'Por recaudar', val: clp(totalExpected - totalIncome), color: 'var(--amber)' },
                   { label: 'Total gastado', val: clp(totalExpense), color: 'var(--red)' },
@@ -588,7 +588,7 @@ export function TesoreraDashboard({
           </>
         )}
 
-        {/* â•â• ALUMNOS â•â• */}
+        {/* ══ ALUMNOS ══ */}
         {tab === 'alumnos' && (
           <div className="card">
             <div className="row mb-4">
@@ -615,15 +615,15 @@ export function TesoreraDashboard({
           </div>
         )}
 
-        {/* â•â• APODERADOS â•â• */}
+        {/* ══ APODERADOS ══ */}
         {tab === 'apoderados' && (
           <div className="card">
             <div className="row mb-4">
-              <div className="card-title" style={{ marginBottom: 0 }}>GestiÃ³n de apoderados</div>
+              <div className="card-title" style={{ marginBottom: 0 }}>Gestión de apoderados</div>
               <button className="btn btn-primary" onClick={() => openModal('apoderado', { ap_students: [] })}>+ Crear apoderado</button>
             </div>
             <div className="alert alert-blue mb-4">
-              â„¹ï¸ La contraseÃ±a inicial se entrega al apoderado. Al primer ingreso, el sistema le pedirÃ¡ que la cambie.
+              ℹ️ La contraseña inicial se entrega al apoderado. Al primer ingreso, el sistema le pedirá que la cambie.
             </div>
             <table className="tbl">
               <thead><tr><th>Nombre</th><th>Usuario</th><th>Alumno(s)</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -646,7 +646,7 @@ export function TesoreraDashboard({
         )}
       </div>
 
-      {/* â•â• MODALES â•â• */}
+      {/* ══ MODALES ══ */}
 
       {modal === 'quota' && (
         <Modal title="Nueva cuota" onClose={closeModal}>
@@ -655,13 +655,13 @@ export function TesoreraDashboard({
           <input className="form-input" placeholder="ej: Cuota Junio" value={form.q_name || ''} onChange={e => setF('q_name', e.target.value)} />
           <label className="form-label">Tipo</label>
           <select className="form-input" value={form.q_type || ''} onChange={e => { setF('q_type', e.target.value); setF('q_participants', []); setF('q_all', false) }}>
-            <option value="">â€” seleccionar â€”</option>
+            <option value="">— seleccionar —</option>
             <option value="mensual">Mensual (todo el curso)</option>
-            <option value="especial">Especial (viaje, eventoâ€¦)</option>
+            <option value="especial">Especial (viaje, evento…)</option>
           </select>
           {form.q_type === 'especial' && (
             <div style={{ marginBottom: 12 }}>
-              <label className="form-label">Â¿QuiÃ©nes participan?</label>
+              <label className="form-label">¿Quiénes participan?</label>
               <div style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
                   <input type="radio" name="q_scope" checked={!!form.q_all} onChange={() => { setF('q_all', true); setF('q_participants', []) }} /> Todo el curso
@@ -678,7 +678,7 @@ export function TesoreraDashboard({
           <input className="form-input" type="number" min="1" value={form.q_amount || ''} onChange={e => setF('q_amount', e.target.value)} />
           {form.q_amount && (
             <div className="alert alert-green" style={{ fontSize: 11 }}>
-              RecaudaciÃ³n esperada: <strong>{clp(Number(form.q_amount) * (form.q_type === 'mensual' || form.q_all ? students.length : (form.q_participants || []).length))}</strong>
+              Recaudación esperada: <strong>{clp(Number(form.q_amount) * (form.q_type === 'mensual' || form.q_all ? students.length : (form.q_participants || []).length))}</strong>
             </div>
           )}
           <label className="form-label">Vencimiento (opcional)</label>
@@ -686,7 +686,7 @@ export function TesoreraDashboard({
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
             <button className="btn btn-primary" disabled={isPending || !form.q_name || !form.q_amount || !form.q_type || (form.q_type === 'especial' && !form.q_all && !(form.q_participants || []).length)} onClick={handleSaveQuota}>
-              {isPending ? 'Guardandoâ€¦' : 'Crear cuota'}
+              {isPending ? 'Guardando…' : 'Crear cuota'}
             </button>
           </div>
         </Modal>
@@ -697,15 +697,15 @@ export function TesoreraDashboard({
           {err && <div className="alert alert-red">{err}</div>}
           <label className="form-label">Cuota</label>
           <select className="form-input" value={form.quota_id || ''} onChange={e => { setF('quota_id', e.target.value); setF('student_id', '') }}>
-            <option value="">â€” seleccionar â€”</option>
-            {quotas.map(q => <option key={q.id} value={q.id}>{q.name} â€” {clp(q.amount)}</option>)}
+            <option value="">— seleccionar —</option>
+            {quotas.map(q => <option key={q.id} value={q.id}>{q.name} — {clp(q.amount)}</option>)}
           </select>
           <label className="form-label">Alumno</label>
           <select className="form-input" value={form.student_id || ''} onChange={e => setF('student_id', e.target.value)} disabled={!form.quota_id}>
-            <option value="">â€” seleccionar â€”</option>
+            <option value="">— seleccionar —</option>
             {students.filter(s => eligibleForPago.includes(s.id)).map(s => {
               const paid = hasPaid(s.id, form.quota_id)
-              return <option key={s.id} value={s.id} disabled={paid}>{s.name}{paid ? ' âœ“ ya pagÃ³' : ''}</option>
+              return <option key={s.id} value={s.id} disabled={paid}>{s.name}{paid ? ' ✓ ya pagó' : ''}</option>
             })}
           </select>
           {quotaForPago?.participant_ids !== null && form.quota_id && (
@@ -716,7 +716,7 @@ export function TesoreraDashboard({
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
             <button className="btn btn-primary" disabled={isPending || !form.student_id || !form.quota_id || hasPaid(form.student_id, form.quota_id)} onClick={handleSavePago}>
-              {isPending ? 'Guardandoâ€¦' : 'Registrar'}
+              {isPending ? 'Guardando…' : 'Registrar'}
             </button>
           </div>
         </Modal>
@@ -725,23 +725,23 @@ export function TesoreraDashboard({
       {modal === 'gasto' && (
         <Modal title="Registrar gasto" onClose={closeModal}>
           {err && <div className="alert alert-red">{err}</div>}
-          {balance <= 0 && <div className="alert alert-amber">âš ï¸ Saldo actual: {clp(balance)}.</div>}
-          <label className="form-label">DescripciÃ³n</label>
+          {balance <= 0 && <div className="alert alert-amber">⚠️ Saldo actual: {clp(balance)}.</div>}
+          <label className="form-label">Descripción</label>
           <input className="form-input" value={form.e_desc || ''} onChange={e => setF('e_desc', e.target.value)} />
-          <label className="form-label">CategorÃ­a</label>
+          <label className="form-label">Categoría</label>
           <select className="form-input" value={form.e_category || ''} onChange={e => setF('e_category', e.target.value)}>
-            <option value="">â€” seleccionar â€”</option>
-            {['Material', 'ReuniÃ³n', 'Evento', 'Viaje', 'Otro'].map(c => <option key={c}>{c}</option>)}
+            <option value="">— seleccionar —</option>
+            {['Material', 'Reunión', 'Evento', 'Viaje', 'Otro'].map(c => <option key={c}>{c}</option>)}
           </select>
           <label className="form-label">Monto (CLP)</label>
           <input className="form-input" type="number" min="1" value={form.e_amount || ''} onChange={e => setF('e_amount', e.target.value)} />
-          {form.e_amount && <div className="alert alert-green" style={{ fontSize: 11 }}>Saldo despuÃ©s: <strong>{clp(balance - Number(form.e_amount))}</strong></div>}
+          {form.e_amount && <div className="alert alert-green" style={{ fontSize: 11 }}>Saldo después: <strong>{clp(balance - Number(form.e_amount))}</strong></div>}
           <label className="form-label">Fecha</label>
           <input className="form-input" type="date" value={form.e_date || nowDate()} onChange={e => setF('e_date', e.target.value)} />
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
             <button className="btn btn-danger" disabled={isPending || !form.e_desc || !form.e_amount} onClick={handleSaveExpense}>
-              {isPending ? 'Guardandoâ€¦' : 'Registrar gasto'}
+              {isPending ? 'Guardando…' : 'Registrar gasto'}
             </button>
           </div>
         </Modal>
@@ -755,7 +755,7 @@ export function TesoreraDashboard({
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
             <button className="btn btn-primary" disabled={isPending || !form.s_name?.trim()} onClick={handleSaveStudent}>
-              {isPending ? 'Guardandoâ€¦' : 'Agregar'}
+              {isPending ? 'Guardando…' : 'Agregar'}
             </button>
           </div>
         </Modal>
@@ -765,18 +765,18 @@ export function TesoreraDashboard({
         <Modal title="Crear apoderado" onClose={closeModal}>
           {err && <div className="alert alert-red">{err}</div>}
           <label className="form-label">Nombre completo</label>
-          <input className="form-input" placeholder="ej: MarÃ­a GonzÃ¡lez" value={form.ap_name || ''} onChange={e => setF('ap_name', e.target.value)} />
+          <input className="form-input" placeholder="ej: María González" value={form.ap_name || ''} onChange={e => setF('ap_name', e.target.value)} />
           <label className="form-label">Nombre de usuario</label>
           <input className="form-input" placeholder="ej: mgonzalez (sin espacios)" value={form.ap_user || ''} onChange={e => setF('ap_user', e.target.value.toLowerCase().replace(/\s/g, ''))} />
-          <label className="form-label">ContraseÃ±a inicial</label>
-          <input className="form-input" placeholder="El apoderado deberÃ¡ cambiarla al ingresar" value={form.ap_pass || ''} onChange={e => setF('ap_pass', e.target.value)} />
+          <label className="form-label">Contraseña inicial</label>
+          <input className="form-input" placeholder="El apoderado deberá cambiarla al ingresar" value={form.ap_pass || ''} onChange={e => setF('ap_pass', e.target.value)} />
           <label className="form-label">Alumno(s) asociado(s)</label>
           <StudentPicker students={students} selected={form.ap_students || []} onChange={v => setF('ap_students', v)} />
           {!(form.ap_students || []).length && <div className="alert alert-amber" style={{ fontSize: 11 }}>Debes seleccionar al menos un alumno.</div>}
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
             <button className="btn btn-primary" disabled={isPending || !form.ap_name || !form.ap_user || !form.ap_pass || !(form.ap_students || []).length} onClick={handleSaveApoderado}>
-              {isPending ? 'Creandoâ€¦' : 'Crear apoderado'}
+              {isPending ? 'Creando…' : 'Crear apoderado'}
             </button>
           </div>
         </Modal>

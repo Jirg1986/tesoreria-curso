@@ -1,4 +1,4 @@
-﻿// src/lib/supabase/server.ts
+// src/lib/supabase/server.ts
 // Usar en Server Components y Server Actions
 
 import { createServerClient } from '@supabase/ssr'
@@ -25,7 +25,7 @@ export async function createClient() {
   )
 }
 
-// Cliente con service role â€” SOLO para Server Actions sensibles
+// Cliente con service role — SOLO para Server Actions sensibles
 // (crear usuarios en auth, etc.)
 export function createServiceClient() {
   const { createClient } = require('@supabase/supabase-js')

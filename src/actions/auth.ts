@@ -1,28 +1,28 @@
-﻿'use server'
+'use server'
 // src/actions/auth.ts
 
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-// â”€â”€ Construir email ficticio interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Construir email ficticio interno ──────────────────────────
 // El usuario nunca ve esto. Formato: username@curso-COURSEID.internal
 function buildFakeEmail(username: string, courseId: string) {
   return `${username}@curso-${courseId}.internal`
 }
 
-// â”€â”€ LOGIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── LOGIN ─────────────────────────────────────────────────────
 export async function loginAction(formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
   if (!username || !password) {
-    return { error: 'Ingresa usuario y contraseÃ±a.' }
+    return { error: 'Ingresa usuario y contraseña.' }
   }
 
   const supabase = await createClient()
 
   // 1. Buscar el app_user por username para obtener course_id
-  //    Necesitamos el service client porque aÃºn no hay sesiÃ³n
+  //    Necesitamos el service client porque aún no hay sesión
   const service = createServiceClient()
   const { data: appUser, error: userError } = await service
     .from('app_users')
@@ -31,7 +31,7 @@ export async function loginAction(formData: FormData) {
     .single()
 
   if (userError || !appUser) {
-    return { error: 'Usuario o contraseÃ±a incorrectos.' }
+    return { error: 'Usuario o contraseña incorrectos.' }
   }
 
   // 2. Construir email ficticio y autenticar
@@ -42,10 +42,10 @@ export async function loginAction(formData: FormData) {
   })
 
   if (authError) {
-    return { error: 'Usuario o contraseÃ±a incorrectos.' }
+    return { error: 'Usuario o contraseña incorrectos.' }
   }
 
-  // 3. Redirigir segÃºn rol
+  // 3. Redirigir según rol
   if (appUser.must_change_password) {
     redirect('/change-password')
   }
@@ -57,30 +57,30 @@ export async function loginAction(formData: FormData) {
   }
 }
 
-// â”€â”€ LOGOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── LOGOUT ────────────────────────────────────────────────────
 export async function logoutAction() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
 }
 
-// â”€â”€ CAMBIAR CONTRASEÃ‘A â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CAMBIAR CONTRASEÑA ────────────────────────────────────────
 export async function changePasswordAction(formData: FormData) {
   const password    = formData.get('password') as string
   const confirmPass = formData.get('confirm') as string
 
   if (!password || password.length < 4) {
-    return { error: 'La contraseÃ±a debe tener al menos 4 caracteres.' }
+    return { error: 'La contraseña debe tener al menos 4 caracteres.' }
   }
   if (password !== confirmPass) {
-    return { error: 'Las contraseÃ±as no coinciden.' }
+    return { error: 'Las contraseñas no coinciden.' }
   }
 
   const supabase = await createClient()
 
   // Actualizar clave en Supabase Auth
   const { error: authError } = await supabase.auth.updateUser({ password })
-  if (authError) return { error: 'Error al cambiar la contraseÃ±a.' }
+  if (authError) return { error: 'Error al cambiar la contraseña.' }
 
   // Marcar must_change_password = false
   const { data: { user } } = await supabase.auth.getUser()
@@ -94,7 +94,7 @@ export async function changePasswordAction(formData: FormData) {
   redirect('/apoderado')
 }
 
-// â”€â”€ OBTENER USUARIO ACTUAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── OBTENER USUARIO ACTUAL ────────────────────────────────────
 export async function getCurrentAppUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -109,7 +109,7 @@ export async function getCurrentAppUser() {
   return data
 }
 
-// â”€â”€ CREAR APODERADO (solo tesorera) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CREAR APODERADO (solo tesorera) ───────────────────────────
 export async function createApoderadoAction(formData: FormData) {
   const username    = formData.get('username') as string
   const displayName = formData.get('display_name') as string
@@ -182,7 +182,7 @@ export async function createApoderadoAction(formData: FormData) {
   return { success: true, user: newUser }
 }
 
-// â”€â”€ RESET CLAVE APODERADO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── RESET CLAVE APODERADO ─────────────────────────────────────
 export async function resetApoderadoPasswordAction(apoderadoId: string, newPassword: string = '1234') {
   const tesorera = await getCurrentAppUser()
   if (!tesorera || tesorera.role !== 'tesorera') return { error: 'Sin permisos.' }
@@ -204,7 +204,7 @@ export async function resetApoderadoPasswordAction(apoderadoId: string, newPassw
   return { success: true }
 }
 
-// â”€â”€ ELIMINAR APODERADO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ELIMINAR APODERADO ────────────────────────────────────────
 export async function deleteApoderadoAction(apoderadoId: string) {
   const tesorera = await getCurrentAppUser()
   if (!tesorera || tesorera.role !== 'tesorera') return { error: 'Sin permisos.' }

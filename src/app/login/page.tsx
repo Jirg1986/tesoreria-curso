@@ -1,4 +1,4 @@
-﻿// src/app/login/page.tsx
+// src/app/login/page.tsx
 'use client'
 
 import { useState, useTransition } from 'react'
@@ -46,15 +46,15 @@ export default function LoginPage() {
         width: 380,
       }}>
         <div style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-0.04em', marginBottom: 4 }}>
-          TesorerÃ­a <em style={{ color: '#a5b4fc' }}>Curso</em>
+          Tesorería <em style={{ color: '#a5b4fc' }}>Curso</em>
         </div>
         <div style={{ color: '#6b7280', fontSize: 13, marginBottom: 32 }}>
-          Ingresa con tu usuario y contraseÃ±a
+          Ingresa con tu usuario y contraseña
         </div>
 
         {error && (
           <div style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, padding: '10px 12px', color: '#fca5a5', fontSize: 12, fontWeight: 600, marginBottom: 16 }}>
-            âš ï¸ {error}
+            ⚠️ {error}
           </div>
         )}
 
@@ -71,14 +71,14 @@ export default function LoginPage() {
           />
 
           <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9ca3af', marginBottom: 5 }}>
-            ContraseÃ±a
+            Contraseña
           </label>
           <input
             type="password"
             style={{ width: '100%', padding: '11px 14px', border: '1.5px solid rgba(255,255,255,0.1)', borderRadius: 9, fontSize: 14, background: 'rgba(255,255,255,0.06)', color: '#fff', marginBottom: 24, transition: 'border 0.15s' }}
             value={form.password}
             onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+            placeholder="••••••••"
             autoComplete="current-password"
           />
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
             disabled={isPending}
             style={{ width: '100%', padding: 12, border: 'none', borderRadius: 9, background: isPending ? '#4338ca' : '#5b4df5', color: '#fff', fontFamily: "'Instrument Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: isPending ? 'wait' : 'pointer' }}
           >
-            {isPending ? 'Ingresandoâ€¦' : 'Ingresar â†’'}
+            {isPending ? 'Ingresando…' : 'Ingresar →'}
           </button>
         </form>
       </div>

@@ -1,4 +1,4 @@
-﻿// src/app/change-password/page.tsx
+// src/app/change-password/page.tsx
 'use client'
 
 import { useState, useTransition } from 'react'
@@ -24,9 +24,9 @@ export default function ChangePasswordPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f5f4fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
       <div style={{ background: '#fff', borderRadius: 16, padding: '36px 40px', width: 380, boxShadow: '0 8px 40px rgba(0,0,0,0.1)' }}>
-        <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 6 }}>Nueva contraseÃ±a</div>
+        <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 6 }}>Nueva contraseña</div>
         <div style={{ color: '#8886a0', fontSize: 13, marginBottom: 24 }}>
-          Por seguridad, debes establecer tu contraseÃ±a personal antes de continuar.
+          Por seguridad, debes establecer tu contraseña personal antes de continuar.
         </div>
 
         {error && (
@@ -37,7 +37,7 @@ export default function ChangePasswordPage() {
 
         <form onSubmit={handleSubmit}>
           <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#8886a0', marginBottom: 5 }}>
-            Nueva contraseÃ±a (mÃ­nimo 6 caracteres)
+            Nueva contraseña (mínimo 6 caracteres)
           </label>
           <input
             type="password"
@@ -47,7 +47,7 @@ export default function ChangePasswordPage() {
           />
 
           <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#8886a0', marginBottom: 5 }}>
-            Repetir contraseÃ±a
+            Repetir contraseña
           </label>
           <input
             type="password"
@@ -61,7 +61,7 @@ export default function ChangePasswordPage() {
             disabled={isPending}
             style={{ width: '100%', padding: '11px', border: 'none', borderRadius: 9, background: '#5b4df5', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
           >
-            {isPending ? 'Guardandoâ€¦' : 'Guardar y continuar â†’'}
+            {isPending ? 'Guardando…' : 'Guardar y continuar →'}
           </button>
         </form>
       </div>

@@ -1,5 +1,5 @@
-﻿// src/middleware.ts
-// Protege las rutas â€” redirige si no hay sesiÃ³n activa
+// src/middleware.ts
+// Protege las rutas — redirige si no hay sesión activa
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
@@ -28,16 +28,16 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // Rutas pÃºblicas
+  // Rutas públicas
   const publicPaths = ['/login', '/change-password']
   const isPublic = publicPaths.some(p => path.startsWith(p))
 
-  // Sin sesiÃ³n â†’ redirigir a login
+  // Sin sesión → redirigir a login
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Con sesiÃ³n en login â†’ redirigir a home
+  // Con sesión en login → redirigir a home
   if (user && path === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }

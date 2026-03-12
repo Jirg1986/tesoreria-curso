@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 // src/components/ApoderadoDashboard.tsx
 
 import { useTransition } from 'react'
@@ -8,7 +8,7 @@ import type { AppUser, Student, Quota, Payment, Expense } from '@/lib/supabase/t
 const clp   = (n: number) => `$${Math.round(n).toLocaleString('es-CL')}`
 const dateF = (s?: string | null) => s
   ? new Date(s + 'T00:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })
-  : 'â€”'
+  : '—'
 
 const quotaParticipants = (q: Quota, students: Student[]) =>
   q.participant_ids ?? students.map(s => s.id)
@@ -41,11 +41,11 @@ export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
       {/* TOPBAR */}
       <div className="topbar">
         <div>
-          <div className="topbar-title">ðŸ“‹ TesorerÃ­a <span>Curso</span></div>
-          <div className="topbar-sub">Vista Apoderado Â· {user.display_name}</div>
+          <div className="topbar-title">📋 Tesorería <span>Curso</span></div>
+          <div className="topbar-sub">Vista Apoderado · {user.display_name}</div>
         </div>
         <div className="topbar-right">
-          <span className="topbar-user">ðŸ‘¤ {user.display_name}</span>
+          <span className="topbar-user">👤 {user.display_name}</span>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => startTransition(() => logoutAction())}
@@ -76,7 +76,7 @@ export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
           </div>
           <div className="row mb-3">
             <span className="fs-12 c-muted fw-700" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Avance de recaudaciÃ³n del curso
+              Avance de recaudación del curso
             </span>
             <span className="fw-700 c-indigo fs-13">{globalPct}%</span>
           </div>
@@ -103,9 +103,9 @@ export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
           return (
             <div key={s.id} className="card mb-4">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div className="card-title" style={{ marginBottom: 0 }}>ðŸ“š {s.name}</div>
+                <div className="card-title" style={{ marginBottom: 0 }}>📚 {s.name}</div>
                 {allPaid && myQuotas.length > 0
-                  ? <span className="badge badge-green">âœ“ Al dÃ­a</span>
+                  ? <span className="badge badge-green">✓ Al día</span>
                   : <span className="badge badge-amber">{myQuotas.filter(q => !hasPaid(s.id, q.id)).length} pendiente(s)</span>
                 }
               </div>
@@ -146,7 +146,7 @@ export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span className="fw-700 fs-13" style={{ color: paid ? 'var(--green)' : 'var(--red)' }}>{clp(q.amount)}</span>
-                        <span className={`badge ${paid ? 'badge-green' : 'badge-red'}`}>{paid ? 'âœ“ Pagado' : 'Pendiente'}</span>
+                        <span className={`badge ${paid ? 'badge-green' : 'badge-red'}`}>{paid ? '✓ Pagado' : 'Pendiente'}</span>
                       </div>
                     </div>
                   )
