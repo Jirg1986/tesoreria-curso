@@ -3,9 +3,9 @@
 // Todas las operaciones CRUD â€” protegidas por RLS en Supabase
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '` @/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { getCurrentAppUser } from './auth'
-import type { QuotaType } from '` @/lib/supabase/types'
+import type { QuotaType } from '@/lib/supabase/types'
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ALUMNOS

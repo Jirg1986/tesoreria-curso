@@ -1,7 +1,7 @@
 ﻿// src/middleware.ts
 // Protege las rutas â€” redirige si no hay sesiÃ³n activa
 
-import { createServerClient } from '` @supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {

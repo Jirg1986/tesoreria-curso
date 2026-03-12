@@ -1,9 +1,9 @@
 ﻿// src/app/apoderado/page.tsx
 
 import { redirect } from 'next/navigation'
-import { getCurrentAppUser } from '` @/actions/auth'
-import { getApoderadoDataAction } from '` @/actions/data'
-import { ApoderadoDashboard } from '` @/components/ApoderadoDashboard'
+import { getCurrentAppUser } from '@/actions/auth'
+import { getApoderadoDataAction } from '@/actions/data'
+import { ApoderadoDashboard } from '@/components/ApoderadoDashboard'
 
 export default async function ApoderadoPage() {
   const user = await getCurrentAppUser()

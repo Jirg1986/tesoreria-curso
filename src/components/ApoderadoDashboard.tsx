@@ -2,8 +2,8 @@
 // src/components/ApoderadoDashboard.tsx
 
 import { useTransition } from 'react'
-import { logoutAction } from '` @/actions/auth'
-import type { AppUser, Student, Quota, Payment, Expense } from '` @/lib/supabase/types'
+import { logoutAction } from '@/actions/auth'
+import type { AppUser, Student, Quota, Payment, Expense } from '@/lib/supabase/types'
 
 const clp   = (n: number) => `$${Math.round(n).toLocaleString('es-CL')}`
 const dateF = (s?: string | null) => s

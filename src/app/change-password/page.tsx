@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { changePasswordAction } from '` @/actions/auth'
+import { changePasswordAction } from '@/actions/auth'
 
 export default function ChangePasswordPage() {
   const [form, setForm]         = useState({ password: '', confirm: '' })

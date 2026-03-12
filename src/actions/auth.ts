@@ -2,7 +2,7 @@
 // src/actions/auth.ts
 
 import { redirect } from 'next/navigation'
-import { createClient, createServiceClient } from '` @/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 // â”€â”€ Construir email ficticio interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // El usuario nunca ve esto. Formato: username@curso-COURSEID.internal

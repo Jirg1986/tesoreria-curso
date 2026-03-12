@@ -7,17 +7,17 @@ import {
   createPaymentAction, deletePaymentAction,
   createExpenseAction, deleteExpenseAction,
   createStudentAction, deleteStudentAction,
-} from '` @/actions/data'
+} from '@/actions/data'
 import {
   createApoderadoAction,
   deleteApoderadoAction,
   resetApoderadoPasswordAction,
   logoutAction,
-} from '` @/actions/auth'
+} from '@/actions/auth'
 import type {
   AppUser, Student, Quota, Payment, Expense,
   AppUserWithStudents, QuotaType,
-} from '` @/lib/supabase/types'
+} from '@/lib/supabase/types'
 
 // â”€â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const clp   = (n: number) => `$${Math.round(n).toLocaleString('es-CL')}`

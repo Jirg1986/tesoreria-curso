@@ -2,7 +2,7 @@
 // Verifica que el usuario sea tesorera, si no redirige
 
 import { redirect } from 'next/navigation'
-import { getCurrentAppUser } from '` @/actions/auth'
+import { getCurrentAppUser } from '@/actions/auth'
 
 export default async function DashboardLayout({
   children,
