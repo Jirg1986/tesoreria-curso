@@ -48,7 +48,8 @@ function generatePDF(
   payments: Payment[], expenses: Expense[]
 ) {
   const totalIncome  = payments.reduce((s, p) => { const q = quotas.find(q => q.id === p.quota_id); return s + (q?.amount ?? 0) }, 0)
-  const totalExpense = expenses.reduce((s, e) => s + e.amount, 0)
+  const parentIds    = new Set(expenses.filter(e => e.parent_expense_id).map(e => e.parent_expense_id).filter(Boolean) as string[])
+  const totalExpense = expenses.filter(e => !parentIds.has(e.id)).reduce((s, e) => s + e.amount, 0)
   const balance      = totalIncome - totalExpense
   const totalExpected = quotas.reduce((s, q) => s + q.amount * quotaParticipants(q, students).length, 0)
   const globalPct     = totalExpected > 0 ? Math.round((totalIncome / totalExpected) * 100) : 0
@@ -211,7 +212,13 @@ export function TesoreraDashboard({
 
   // ── Cálculos ───────────────────────────────────────────────
   const totalIncome  = useMemo(() => payments.reduce((s, p) => { const q = quotas.find(q => q.id === p.quota_id); return s + (q?.amount ?? 0) }, 0), [payments, quotas])
-  const totalExpense = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses])
+  // Excluir gastos-evento (padres que tienen hijos) para evitar doble conteo
+  const expenseParentIds = useMemo(() => {
+    const pids = new Set<string>()
+    expenses.forEach(e => { if (e.parent_expense_id) pids.add(e.parent_expense_id) })
+    return pids
+  }, [expenses])
+  const totalExpense = useMemo(() => expenses.filter(e => !expenseParentIds.has(e.id)).reduce((s, e) => s + e.amount, 0), [expenses, expenseParentIds])
   const balance      = totalIncome - totalExpense
 
   const projection = useMemo(() => quotas.map(q => {
@@ -265,9 +272,17 @@ export function TesoreraDashboard({
   }
 
   const handleSaveExpense = () => {
+    const parentId = form.e_parent_id || null
     run(
-      () => createExpenseAction({ description: form.e_desc, amount: Number(form.e_amount), category: form.e_category || 'Otro', date: form.e_date || nowDate() }),
-      () => setExpenses(es => [...es, { id: 'tmp-' + Date.now(), course_id: user.id, description: form.e_desc, amount: Number(form.e_amount), category: form.e_category || 'Otro', date: form.e_date || nowDate(), created_by: user.id, created_at: new Date().toISOString() }])
+      () => createExpenseAction({ description: form.e_desc, amount: Number(form.e_amount), category: form.e_category || 'Otro', date: form.e_date || nowDate(), parent_expense_id: parentId }),
+      () => setExpenses(es => [...es, { id: 'tmp-' + Date.now(), course_id: user.id, description: form.e_desc, amount: Number(form.e_amount), category: form.e_category || 'Otro', date: form.e_date || nowDate(), created_by: user.id, created_at: new Date().toISOString(), parent_expense_id: parentId }])
+    )
+  }
+
+  const handleSaveEvento = () => {
+    run(
+      () => createExpenseAction({ description: form.ev_desc, amount: Number(form.ev_budget), category: 'Evento', date: form.ev_date || nowDate(), parent_expense_id: null }),
+      () => setExpenses(es => [...es, { id: 'tmp-' + Date.now(), course_id: user.id, description: form.ev_desc, amount: Number(form.ev_budget), category: 'Evento', date: form.ev_date || nowDate(), created_by: user.id, created_at: new Date().toISOString(), parent_expense_id: null }])
     )
   }
 
@@ -328,21 +343,22 @@ export function TesoreraDashboard({
     <div>
       {/* TOPBAR */}
       <div className="topbar no-print">
-        <div>
+        <div className="topbar-brand">
           <div className="topbar-title">🏦 Tesorería <span>Curso</span></div>
           <div className="topbar-sub">Vista Tesorera · {user.display_name}</div>
         </div>
-        <nav className="topbar-nav">
-          {TABS.map(t => (
-            <button key={t.id} className={`nav-btn ${tab === t.id ? 'active' : 'inactive'}`} onClick={() => setTab(t.id)}>
-              {t.label}
-            </button>
-          ))}
-        </nav>
         <div className="topbar-right">
           <button className="btn btn-green btn-sm" onClick={() => generatePDF(students, quotas, payments, expenses)}>📄 PDF</button>
           <button className="btn btn-ghost btn-sm" onClick={() => startTransition(() => logoutAction())}>Salir</button>
         </div>
+      </div>
+      {/* NAV (separado del topbar para mobile scroll) */}
+      <div className="tabnav no-print">
+        {TABS.map(t => (
+          <button key={t.id} className={`nav-btn ${tab === t.id ? 'active' : 'inactive'}`} onClick={() => setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <div className="content">
@@ -504,34 +520,107 @@ export function TesoreraDashboard({
         )}
 
         {/* ══ GASTOS ══ */}
-        {tab === 'gastos' && (
-          <div className="card">
-            <div className="row mb-4">
-              <div className="card-title" style={{ marginBottom: 0 }}>Gastos registrados</div>
-              <button className="btn btn-danger" onClick={() => openModal('gasto')}>+ Registrar gasto</button>
-            </div>
-            {balance < 0 && <div className="alert alert-red">⚠️ Saldo negativo: los gastos superan lo recaudado en {clp(Math.abs(balance))}.</div>}
-            {balance >= 0 && balance < totalExpense * 0.2 && totalExpense > 0 && <div className="alert alert-amber">⚠️ Saldo bajo: quedan {clp(balance)} disponibles.</div>}
-            <table className="tbl">
-              <thead><tr><th>Descripción</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
-              <tbody>
-                {[...expenses].reverse().map(e => (
-                  <tr key={e.id}>
-                    <td className="fw-700 fs-13">{e.description}</td>
-                    <td><span className="badge badge-indigo">{e.category}</span></td>
-                    <td className="fw-700 c-red">-{clp(e.amount)}</td>
-                    <td className="fs-12 c-muted">{dateF(e.date)}</td>
-                    <td><button className="btn-red-sm" onClick={() => handleDeleteExpense(e.id)}>Eliminar</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {expenses.length === 0 && <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 13, padding: '20px 0' }}>Sin gastos registrados</div>}
-            <div className="divider" />
-            <div className="row"><span className="fs-13 c-muted">Total gastado</span><span className="fw-700 c-red" style={{ fontSize: 17, fontFamily: "'Fraunces',serif" }}>{clp(totalExpense)}</span></div>
-            <div className="row mt-3"><span className="fs-13 c-muted">Saldo disponible</span><span className="fw-700" style={{ fontSize: 17, fontFamily: "'Fraunces',serif", color: balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{clp(balance)}</span></div>
-          </div>
-        )}
+        {tab === 'gastos' && (() => {
+          const eventExpenses  = expenses.filter(e => !e.parent_expense_id && expenseParentIds.has(e.id))
+          const directExpenses = expenses.filter(e => !e.parent_expense_id && !expenseParentIds.has(e.id))
+          return (
+            <>
+              {balance < 0 && <div className="alert alert-red">⚠️ Saldo negativo: los gastos superan lo recaudado en {clp(Math.abs(balance))}.</div>}
+              {balance >= 0 && balance < totalExpense * 0.2 && totalExpense > 0 && <div className="alert alert-amber">⚠️ Saldo bajo: quedan {clp(balance)} disponibles.</div>}
+
+              {/* Eventos con presupuesto */}
+              {eventExpenses.length > 0 && (
+                <div className="card mb-4">
+                  <div className="row mb-4">
+                    <div className="card-title" style={{ marginBottom: 0 }}>🎒 Eventos con presupuesto</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openModal('evento')}>+ Nuevo evento</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => openModal('gasto')}>+ Registrar gasto</button>
+                    </div>
+                  </div>
+                  {eventExpenses.map(ev => {
+                    const children = expenses.filter(e => e.parent_expense_id === ev.id)
+                    const spent    = children.reduce((s, c) => s + c.amount, 0)
+                    const remaining = ev.amount - spent
+                    const pct = ev.amount > 0 ? Math.min(100, Math.round((spent / ev.amount) * 100)) : 0
+                    return (
+                      <div key={ev.id} style={{ marginBottom: 20 }}>
+                        <div className="row mb-3" style={{ flexWrap: 'wrap', gap: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span className="fw-700 fs-13">{ev.description}</span>
+                            <span className="badge badge-indigo">Presupuesto: {clp(ev.amount)}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span className="fs-12 c-muted">Gastado: <strong style={{ color: 'var(--red)' }}>{clp(spent)}</strong></span>
+                            <span className="fs-12" style={{ color: remaining >= 0 ? 'var(--green)' : 'var(--red)', fontWeight: 700 }}>
+                              {remaining >= 0 ? `Saldo: ${clp(remaining)}` : `⚠️ Excedido: ${clp(Math.abs(remaining))}`}
+                            </span>
+                            <button className="btn-red-sm" onClick={() => handleDeleteExpense(ev.id)}>Eliminar evento</button>
+                          </div>
+                        </div>
+                        <div className="progress-bar" style={{ marginBottom: 8 }}>
+                          <div className="progress-fill" style={{ width: `${pct}%`, background: pct >= 100 ? 'var(--red)' : pct >= 75 ? 'var(--amber)' : 'var(--green)' }} />
+                        </div>
+                        {children.length > 0 ? (
+                          <div style={{ paddingLeft: 16 }}>
+                            {children.map(c => (
+                              <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--gray-lt)', borderRadius: 8, marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
+                                <div>
+                                  <span className="fw-700 fs-13">↳ {c.description}</span>
+                                  <span className="fs-12 c-muted" style={{ marginLeft: 8 }}>{dateF(c.date)}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span className="fw-700 c-red fs-13">-{clp(c.amount)}</span>
+                                  <button className="btn-red-sm" onClick={() => handleDeleteExpense(c.id)}>×</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ paddingLeft: 16, fontSize: 12, color: 'var(--muted)' }}>Sin gastos asociados aún.</div>
+                        )}
+                        <div className="divider" />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Gastos directos */}
+              <div className="card">
+                <div className="row mb-4">
+                  <div className="card-title" style={{ marginBottom: 0 }}>Gastos registrados</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openModal('evento')}>+ Nuevo evento</button>
+                    <button className="btn btn-danger" onClick={() => openModal('gasto')}>+ Registrar gasto</button>
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="tbl">
+                    <thead><tr><th>Descripción</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
+                    <tbody>
+                      {directExpenses.length === 0 && (
+                        <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 13, padding: '20px 0' }}>Sin gastos directos registrados</td></tr>
+                      )}
+                      {[...directExpenses].reverse().map(e => (
+                        <tr key={e.id}>
+                          <td className="fw-700 fs-13">{e.description}</td>
+                          <td><span className="badge badge-indigo">{e.category}</span></td>
+                          <td className="fw-700 c-red">-{clp(e.amount)}</td>
+                          <td className="fs-12 c-muted">{dateF(e.date)}</td>
+                          <td><button className="btn-red-sm" onClick={() => handleDeleteExpense(e.id)}>Eliminar</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="divider" />
+                <div className="row"><span className="fs-13 c-muted">Total gastado</span><span className="fw-700 c-red" style={{ fontSize: 17, fontFamily: "'Fraunces',serif" }}>{clp(totalExpense)}</span></div>
+                <div className="row mt-3"><span className="fs-13 c-muted">Saldo disponible</span><span className="fw-700" style={{ fontSize: 17, fontFamily: "'Fraunces',serif", color: balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{clp(balance)}</span></div>
+              </div>
+            </>
+          )
+        })()}
 
         {/* ══ PROYECCIÓN ══ */}
         {tab === 'proyeccion' && (
@@ -722,26 +811,78 @@ export function TesoreraDashboard({
         </Modal>
       )}
 
-      {modal === 'gasto' && (
-        <Modal title="Registrar gasto" onClose={closeModal}>
+      {modal === 'gasto' && (() => {
+        const eventParents = expenses.filter(e => !e.parent_expense_id && expenseParentIds.has(e.id))
+        const parentId     = form.e_parent_id || null
+        const parentEvt    = parentId ? expenses.find(e => e.id === parentId) : null
+        const parentSpent  = parentEvt ? expenses.filter(e => e.parent_expense_id === parentEvt.id).reduce((s, c) => s + c.amount, 0) : 0
+        const parentRemain = parentEvt ? parentEvt.amount - parentSpent : null
+        return (
+          <Modal title="Registrar gasto" onClose={closeModal}>
+            {err && <div className="alert alert-red">{err}</div>}
+            {balance <= 0 && <div className="alert alert-amber">⚠️ Saldo actual: {clp(balance)}.</div>}
+            {eventParents.length > 0 && (
+              <>
+                <label className="form-label">Asociar a evento (opcional)</label>
+                <select className="form-input" value={form.e_parent_id || ''} onChange={e => { setF('e_parent_id', e.target.value || null); setF('e_category', e.target.value ? 'Evento' : form.e_category) }}>
+                  <option value="">— gasto directo —</option>
+                  {eventParents.map(ev => {
+                    const sp = expenses.filter(c => c.parent_expense_id === ev.id).reduce((s, c) => s + c.amount, 0)
+                    return <option key={ev.id} value={ev.id}>{ev.description} (saldo: {clp(ev.amount - sp)})</option>
+                  })}
+                </select>
+              </>
+            )}
+            {parentEvt && parentRemain !== null && (
+              <div className="alert alert-blue" style={{ fontSize: 11 }}>
+                Evento: <strong>{parentEvt.description}</strong> · Saldo disponible: <strong>{clp(parentRemain)}</strong>
+              </div>
+            )}
+            <label className="form-label">Descripción</label>
+            <input className="form-input" value={form.e_desc || ''} onChange={e => setF('e_desc', e.target.value)} />
+            {!parentId && (
+              <>
+                <label className="form-label">Categoría</label>
+                <select className="form-input" value={form.e_category || ''} onChange={e => setF('e_category', e.target.value)}>
+                  <option value="">— seleccionar —</option>
+                  {['Material', 'Reunión', 'Evento', 'Viaje', 'Otro'].map(c => <option key={c}>{c}</option>)}
+                </select>
+              </>
+            )}
+            <label className="form-label">Monto (CLP)</label>
+            <input className="form-input" type="number" min="1" value={form.e_amount || ''} onChange={e => setF('e_amount', e.target.value)} />
+            {form.e_amount && !parentId && <div className="alert alert-green" style={{ fontSize: 11 }}>Saldo después: <strong>{clp(balance - Number(form.e_amount))}</strong></div>}
+            {form.e_amount && parentRemain !== null && Number(form.e_amount) > parentRemain && (
+              <div className="alert alert-amber" style={{ fontSize: 11 }}>⚠️ Este gasto excede el saldo del evento ({clp(parentRemain)}).</div>
+            )}
+            <label className="form-label">Fecha</label>
+            <input className="form-input" type="date" value={form.e_date || nowDate()} onChange={e => setF('e_date', e.target.value)} />
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
+              <button className="btn btn-danger" disabled={isPending || !form.e_desc || !form.e_amount || (!parentId && !form.e_category)} onClick={handleSaveExpense}>
+                {isPending ? 'Guardando…' : 'Registrar gasto'}
+              </button>
+            </div>
+          </Modal>
+        )
+      })()}
+
+      {modal === 'evento' && (
+        <Modal title="Crear evento con presupuesto" onClose={closeModal}>
           {err && <div className="alert alert-red">{err}</div>}
-          {balance <= 0 && <div className="alert alert-amber">⚠️ Saldo actual: {clp(balance)}.</div>}
-          <label className="form-label">Descripción</label>
-          <input className="form-input" value={form.e_desc || ''} onChange={e => setF('e_desc', e.target.value)} />
-          <label className="form-label">Categoría</label>
-          <select className="form-input" value={form.e_category || ''} onChange={e => setF('e_category', e.target.value)}>
-            <option value="">— seleccionar —</option>
-            {['Material', 'Reunión', 'Evento', 'Viaje', 'Otro'].map(c => <option key={c}>{c}</option>)}
-          </select>
-          <label className="form-label">Monto (CLP)</label>
-          <input className="form-input" type="number" min="1" value={form.e_amount || ''} onChange={e => setF('e_amount', e.target.value)} />
-          {form.e_amount && <div className="alert alert-green" style={{ fontSize: 11 }}>Saldo después: <strong>{clp(balance - Number(form.e_amount))}</strong></div>}
-          <label className="form-label">Fecha</label>
-          <input className="form-input" type="date" value={form.e_date || nowDate()} onChange={e => setF('e_date', e.target.value)} />
+          <div className="alert alert-blue" style={{ fontSize: 11 }}>
+            Define un presupuesto total para un evento (ej: Viaje MIM). Luego podrás registrar los gastos individuales asociados a él.
+          </div>
+          <label className="form-label">Nombre del evento</label>
+          <input className="form-input" placeholder="ej: Viaje al MIM" value={form.ev_desc || ''} onChange={e => setF('ev_desc', e.target.value)} />
+          <label className="form-label">Presupuesto total (CLP)</label>
+          <input className="form-input" type="number" min="1" placeholder="ej: 100000" value={form.ev_budget || ''} onChange={e => setF('ev_budget', e.target.value)} />
+          <label className="form-label">Fecha de referencia</label>
+          <input className="form-input" type="date" value={form.ev_date || nowDate()} onChange={e => setF('ev_date', e.target.value)} />
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={closeModal}>Cancelar</button>
-            <button className="btn btn-danger" disabled={isPending || !form.e_desc || !form.e_amount} onClick={handleSaveExpense}>
-              {isPending ? 'Guardando…' : 'Registrar gasto'}
+            <button className="btn btn-primary" disabled={isPending || !form.ev_desc || !form.ev_budget} onClick={handleSaveEvento}>
+              {isPending ? 'Creando…' : 'Crear evento'}
             </button>
           </div>
         </Modal>

@@ -98,3 +98,48 @@ body { font-family:"Instrument Sans",sans-serif; background:var(--bg); color:var
 .check-tag { font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; border:none; cursor:pointer; background:var(--gray-lt); color:var(--muted); }
 .check-tag:hover { background:var(--indigo-lt); color:var(--indigo); }
 @media print { .no-print { display:none !important; } }
+
+/* ─── Apoderado extras ──────────────────────────────────── */
+.content-apoderado { max-width:740px; }
+.course-info-banner { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--indigo-lt); border-radius:10px; padding:10px 16px; margin-bottom:16px; border:1px solid #c7d2fe; }
+.course-info-school { font-weight:700; font-size:13px; color:var(--indigo); }
+.course-info-course { font-size:12px; color:var(--slate); }
+.quota-section-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); margin-bottom:8px; }
+.quota-list { display:flex; flex-direction:column; gap:7px; }
+.quota-row { display:flex; align-items:center; justify-content:space-between; border-radius:9px; padding:11px 14px; border:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+.quota-paid { background:var(--green-lt); border-color:#bbf7d0; }
+.quota-pending { background:var(--red-lt); border-color:#fecaca; }
+.quota-name { font-weight:700; font-size:13px; }
+.kpi-value-sm { font-size:18px !important; }
+.topbar-brand { min-width:0; flex:1; }
+
+/* ─── Tab nav separada ──────────────────────────────────── */
+.tabnav { background:rgba(13,13,18,0.95); padding:0 16px 8px; display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.tabnav::-webkit-scrollbar { display:none; }
+.fs-11 { font-size:11px; }
+
+/* ─── Responsive mobile ─────────────────────────────────── */
+@media (max-width:640px) {
+  .topbar { padding:10px 14px; height:auto; min-height:54px; }
+  .topbar-title { font-size:14px; }
+  .topbar-user { display:none; }
+  .content { padding:14px 12px; }
+  .content-apoderado { max-width:100%; }
+  .card { padding:14px 14px; }
+  .card-grid-3 { grid-template-columns:1fr 1fr; }
+  .card-grid-2 { grid-template-columns:1fr; }
+  .kpi-value { font-size:18px; }
+  .kpi-value-sm { font-size:15px !important; }
+  .overlay { align-items:flex-end; padding:0; }
+  .modal { width:100%; max-width:none; border-radius:20px 20px 0 0; margin:0; max-height:92vh; padding:20px 18px; }
+  .tbl th, .tbl td { padding:8px 6px; font-size:11px; }
+  .check-grid { grid-template-columns:1fr; }
+  .course-info-banner { flex-direction:column; align-items:flex-start; gap:4px; }
+  .quota-row { flex-direction:column; align-items:flex-start; }
+  .quota-row > div:last-child { align-self:flex-end; }
+  .row { flex-wrap:wrap; gap:6px; }
+}
+
+@media (max-width:380px) {
+  .card-grid-3 { grid-template-columns:1fr; }
+}

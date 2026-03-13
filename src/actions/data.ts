@@ -3,7 +3,7 @@
 // Todas las operaciones CRUD — protegidas por RLS en Supabase
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getCurrentAppUser } from './auth'
 import type { QuotaType } from '@/lib/supabase/types'
 
@@ -163,22 +163,24 @@ export async function getExpensesAction() {
 }
 
 export async function createExpenseAction(params: {
-  description: string
-  amount:      number
-  category:    string
-  date:        string
+  description:       string
+  amount:            number
+  category:          string
+  date:              string
+  parent_expense_id?: string | null
 }) {
   const user = await getCurrentAppUser()
   if (!user || user.role !== 'tesorera') return { error: 'Sin permisos.' }
 
   const supabase = await createClient()
   const { error } = await supabase.from('expenses').insert({
-    course_id:   user.course_id,
-    description: params.description,
-    amount:      params.amount,
-    category:    params.category,
-    date:        params.date,
-    created_by:  user.id,
+    course_id:         user.course_id,
+    description:       params.description,
+    amount:            params.amount,
+    category:          params.category,
+    date:              params.date,
+    created_by:        user.id,
+    parent_expense_id: params.parent_expense_id ?? null,
   })
 
   if (error) return { error: error.message }
@@ -231,6 +233,7 @@ export async function getApoderadosAction() {
 
 export async function getApoderadoDataAction() {
   const supabase = await createClient()
+  const service  = createServiceClient()
   const user = await getCurrentAppUser()
   if (!user) return null
 
@@ -242,6 +245,17 @@ export async function getApoderadoDataAction() {
 
   const students = (relations ?? []).map(r => (r as any).students).filter(Boolean)
 
+  // Curso y colegio
+  const { data: course } = await service
+    .from('courses')
+    .select('*')
+    .eq('id', user.course_id)
+    .single()
+
+  const school = course?.school_id
+    ? (await service.from('schools').select('*').eq('id', course.school_id).single()).data
+    : null
+
   // Todos los datos del curso
   const [quotas, payments, expenses] = await Promise.all([
     getQuotasAction(),
@@ -249,7 +263,7 @@ export async function getApoderadoDataAction() {
     getExpensesAction(),
   ])
 
-  return { user, students, quotas, payments, expenses }
+  return { user, students, quotas, payments, expenses, course: course ?? null, school: school ?? null }
 }
 
 // ─────────────────────────────────────────────────────────────

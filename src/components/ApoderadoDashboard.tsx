@@ -3,7 +3,7 @@
 
 import { useTransition } from 'react'
 import { logoutAction } from '@/actions/auth'
-import type { AppUser, Student, Quota, Payment, Expense } from '@/lib/supabase/types'
+import type { AppUser, Student, Quota, Payment, Expense, Course, School } from '@/lib/supabase/types'
 
 const clp   = (n: number) => `$${Math.round(n).toLocaleString('es-CL')}`
 const dateF = (s?: string | null) => s
@@ -22,26 +22,30 @@ interface ApoderadoData {
   quotas:   Quota[]
   payments: Payment[]
   expenses: Expense[]
+  course:   Course | null
+  school:   School | null
 }
 
 export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
-  const { user, students, quotas, payments, expenses } = data
+  const { user, students, quotas, payments, expenses, course, school } = data
   const [, startTransition] = useTransition()
 
-  const totalIncome   = payments.reduce((s, p) => { const q = quotas.find(q => q.id === p.quota_id); return s + (q?.amount ?? 0) }, 0)
-  const totalExpense  = expenses.reduce((s, e) => s + e.amount, 0)
-  const balance       = totalIncome - totalExpense
-  const totalExpected = quotas.reduce((s, q) => s + q.amount * quotaParticipants(q, students).length, 0)
-  const globalPct     = totalExpected > 0 ? Math.round((totalIncome / totalExpected) * 100) : 0
+  // Balance del curso (solo montos, sin "Esperado Total")
+  const totalIncome  = payments.reduce((s, p) => { const q = quotas.find(q => q.id === p.quota_id); return s + (q?.amount ?? 0) }, 0)
+  const totalExpense = expenses.filter(e => !expenses.some(c => (c.parent_expense_id ?? null) === e.id)).reduce((s, e) => s + e.amount, 0)
+  const balance      = totalIncome - totalExpense
 
   const hasPaid = (sid: string, qid: string) => payments.some(p => p.student_id === sid && p.quota_id === qid)
+
+  const mensualQuotas  = quotas.filter(q => q.type === 'mensual')
+  const especialQuotas = quotas.filter(q => q.type === 'especial')
 
   return (
     <div>
       {/* TOPBAR */}
       <div className="topbar">
-        <div>
-          <div className="topbar-title">📋 Tesorería <span>Curso</span></div>
+        <div className="topbar-brand">
+          <div className="topbar-title">📋 {school?.name ?? 'Tesorería'} <span>{course?.name ?? 'Curso'}</span></div>
           <div className="topbar-sub">Vista Apoderado · {user.display_name}</div>
         </div>
         <div className="topbar-right">
@@ -55,116 +59,108 @@ export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
         </div>
       </div>
 
-      <div className="content" style={{ maxWidth: 740 }}>
+      <div className="content content-apoderado">
 
-        {/* Balance general */}
+        {/* Info del curso */}
+        {(school || course) && (
+          <div className="course-info-banner">
+            <span className="course-info-school">🏫 {school?.name}</span>
+            {course && <span className="course-info-course">📚 {course.name} · {course.period}</span>}
+          </div>
+        )}
+
+        {/* Balance general (sin Esperado Total) */}
         <div className="card mb-4">
           <div className="card-title">Balance general del curso</div>
           <div className="card-grid card-grid-3 mb-4">
             <div className="kpi kpi-indigo">
               <div className="kpi-label">Saldo actual</div>
-              <div className="kpi-value" style={{ fontSize: 20 }}>{clp(balance)}</div>
+              <div className="kpi-value kpi-value-sm">{clp(balance)}</div>
             </div>
             <div className="kpi kpi-green">
               <div className="kpi-label">Recaudado</div>
-              <div className="kpi-value" style={{ fontSize: 20 }}>{clp(totalIncome)}</div>
+              <div className="kpi-value kpi-value-sm">{clp(totalIncome)}</div>
             </div>
             <div className="kpi kpi-red">
               <div className="kpi-label">Gastado</div>
-              <div className="kpi-value" style={{ fontSize: 20 }}>{clp(totalExpense)}</div>
+              <div className="kpi-value kpi-value-sm">{clp(totalExpense)}</div>
             </div>
-          </div>
-          <div className="row mb-3">
-            <span className="fs-12 c-muted fw-700" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Avance de recaudación del curso
-            </span>
-            <span className="fw-700 c-indigo fs-13">{globalPct}%</span>
-          </div>
-          <div className="progress-bar" style={{ height: 9 }}>
-            <div className="progress-fill" style={{
-              width: `${globalPct}%`,
-              background: globalPct >= 80 ? 'var(--green)' : globalPct >= 50 ? 'var(--indigo)' : 'var(--amber)'
-            }} />
-          </div>
-          <div className="row mt-3">
-            <span className="fs-11 c-muted">Esperado: {clp(totalExpected)}</span>
-            <span className="fs-11 c-muted">Por cobrar: <strong style={{ color: 'var(--red)' }}>{clp(totalExpected - totalIncome)}</strong></span>
           </div>
         </div>
 
-        {/* Estado por cada hijo del apoderado */}
-        {data.students.map(s => {
+        {/* Sin alumnos asignados */}
+        {students.length === 0 && (
+          <div className="card" style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--muted)' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>👦</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>No tienes alumnos asignados</div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>Contacta a la tesorera del curso.</div>
+          </div>
+        )}
+
+        {/* Estado por cada alumno */}
+        {students.map(s => {
           const myPays     = payments.filter(p => p.student_id === s.id)
           const myQuotas   = quotas.filter(q => isParticipant(q, s.id, students))
           const myExpected = myQuotas.reduce((sum, q) => sum + q.amount, 0)
           const myPaid     = myPays.reduce((sum, p) => { const q = quotas.find(q => q.id === p.quota_id); return sum + (q?.amount ?? 0) }, 0)
-          const allPaid    = myQuotas.every(q => hasPaid(s.id, q.id))
+          const allPaid    = myQuotas.length > 0 && myQuotas.every(q => hasPaid(s.id, q.id))
+
+          const myMensual  = mensualQuotas.filter(q => isParticipant(q, s.id, students))
+          const myEspecial = especialQuotas.filter(q => isParticipant(q, s.id, students))
 
           return (
             <div key={s.id} className="card mb-4">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
                 <div className="card-title" style={{ marginBottom: 0 }}>📚 {s.name}</div>
-                {allPaid && myQuotas.length > 0
+                {myQuotas.length === 0
+                  ? <span className="badge badge-gray">Sin cuotas asignadas</span>
+                  : allPaid
                   ? <span className="badge badge-green">✓ Al día</span>
                   : <span className="badge badge-amber">{myQuotas.filter(q => !hasPaid(s.id, q.id)).length} pendiente(s)</span>
                 }
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-                {quotas.map(q => {
-                  const applies = isParticipant(q, s.id, students)
-                  const paid    = hasPaid(s.id, q.id)
-                  const pay     = myPays.find(p => p.quota_id === q.id)
-
-                  if (!applies) return (
-                    <div key={q.id} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: 'var(--gray-lt)', borderRadius: 9, padding: '11px 14px',
-                      border: '1px solid var(--border)', opacity: 0.55
-                    }}>
-                      <span className="fw-700 fs-13" style={{ color: 'var(--muted)' }}>{q.name}</span>
-                      <span className="badge badge-gray">No aplica</span>
-                    </div>
-                  )
-
-                  return (
-                    <div key={q.id} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: paid ? 'var(--green-lt)' : 'var(--red-lt)',
-                      borderRadius: 9, padding: '11px 14px',
-                      border: `1px solid ${paid ? '#bbf7d0' : '#fecaca'}`
-                    }}>
-                      <div>
-                        <div style={{ display: 'flex', gap: 7, alignItems: 'center', marginBottom: 3 }}>
-                          <span className="fw-700 fs-13">{q.name}</span>
-                          <span className={`badge ${q.type === 'mensual' ? 'badge-indigo' : 'badge-blue'}`}>
-                            {q.type === 'mensual' ? 'Mensual' : 'Especial'}
-                          </span>
-                        </div>
-                        {paid && <div className="fs-12 c-muted">Pagado el {dateF(pay?.paid_at)}</div>}
-                        {!paid && q.due_date && <div className="fs-12" style={{ color: 'var(--red)' }}>Vence: {dateF(q.due_date)}</div>}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="fw-700 fs-13" style={{ color: paid ? 'var(--green)' : 'var(--red)' }}>{clp(q.amount)}</span>
-                        <span className={`badge ${paid ? 'badge-green' : 'badge-red'}`}>{paid ? '✓ Pagado' : 'Pendiente'}</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div style={{ background: 'var(--bg)', borderRadius: 9, padding: '12px 14px' }}>
-                <div className="row mb-3">
-                  <span className="fs-13 c-muted">Total pagado</span>
-                  <span className="fw-700 c-green" style={{ fontFamily: "'Fraunces',serif", fontSize: 16 }}>{clp(myPaid)}</span>
+              {/* Cuotas Mensuales */}
+              {myMensual.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div className="quota-section-label">📅 Cuotas Mensuales</div>
+                  <div className="quota-list">
+                    {myMensual.map(q => <QuotaRow key={q.id} q={q} s={s} myPays={myPays} hasPaid={hasPaid} />)}
+                  </div>
                 </div>
-                <div className="row">
-                  <span className="fs-13 c-muted">Pendiente (cuotas que te aplican)</span>
-                  <span className="fw-700" style={{ fontFamily: "'Fraunces',serif", fontSize: 16, color: myExpected - myPaid > 0 ? 'var(--red)' : 'var(--green)' }}>
-                    {clp(myExpected - myPaid)}
-                  </span>
+              )}
+
+              {/* Cuotas Especiales */}
+              {myEspecial.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div className="quota-section-label">⭐ Cuotas Especiales</div>
+                  <div className="quota-list">
+                    {myEspecial.map(q => <QuotaRow key={q.id} q={q} s={s} myPays={myPays} hasPaid={hasPaid} />)}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {myQuotas.length === 0 && (
+                <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 13, padding: '12px 0' }}>
+                  No hay cuotas registradas aún.
+                </div>
+              )}
+
+              {/* Resumen del alumno */}
+              {myQuotas.length > 0 && (
+                <div style={{ background: 'var(--bg)', borderRadius: 9, padding: '12px 14px' }}>
+                  <div className="row mb-3">
+                    <span className="fs-13 c-muted">Total pagado</span>
+                    <span className="fw-700 c-green" style={{ fontFamily: "'Fraunces',serif", fontSize: 16 }}>{clp(myPaid)}</span>
+                  </div>
+                  <div className="row">
+                    <span className="fs-13 c-muted">Pendiente</span>
+                    <span className="fw-700" style={{ fontFamily: "'Fraunces',serif", fontSize: 16, color: myExpected - myPaid > 0 ? 'var(--red)' : 'var(--green)' }}>
+                      {clp(myExpected - myPaid)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}
@@ -173,3 +169,32 @@ export function ApoderadoDashboard({ data }: { data: ApoderadoData }) {
   )
 }
 
+function QuotaRow({ q, s, myPays, hasPaid }: {
+  q: Quota
+  s: Student
+  myPays: Payment[]
+  hasPaid: (sid: string, qid: string) => boolean
+}) {
+  const paid = hasPaid(s.id, q.id)
+  const pay  = myPays.find(p => p.quota_id === q.id)
+
+  return (
+    <div className={`quota-row ${paid ? 'quota-paid' : 'quota-pending'}`}>
+      <div>
+        <div className="quota-name">{q.name}</div>
+        {paid && <div className="fs-12 c-muted">Pagado el {dateF(pay?.paid_at)}</div>}
+        {!paid && q.due_date && (
+          <div className="fs-12" style={{ color: 'var(--red)' }}>Vence: {dateF(q.due_date)}</div>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="fw-700 fs-13" style={{ color: paid ? 'var(--green)' : 'var(--red)' }}>
+          {`$${Math.round(q.amount).toLocaleString('es-CL')}`}
+        </span>
+        <span className={`badge ${paid ? 'badge-green' : 'badge-red'}`}>
+          {paid ? '✓ Pagado' : 'Pendiente'}
+        </span>
+      </div>
+    </div>
+  )
+}

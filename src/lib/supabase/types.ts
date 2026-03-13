@@ -70,6 +70,7 @@ export interface Expense {
   date: string
   created_by: string | null
   created_at: string
+  parent_expense_id: string | null
 }
 
 // â”€â”€ Tipos compuestos para la UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
